@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { APP_CONFIG, REPORT_REASONS } from '@/lib/constants';
 import { formatTime, sanitizeText } from '@/lib/utils';
 import {
-  Send, UserX, Flag, RefreshCw, Shield, AlertTriangle, XCircle, LogOut, Check
+  Send, UserX, Flag, RefreshCw, Shield, AlertTriangle, XCircle, LogOut, Check, Volume2, VolumeX
 } from 'lucide-react';
 
 type ChatState = 'idle' | 'connecting' | 'waiting' | 'matched' | 'connected' | 'ending' | 'ended' | 'error';
@@ -15,6 +15,41 @@ interface MessageItem {
   sender_id: string;
   body: string;
   created_at: string;
+}
+
+// Zero-asset Web Audio synth for crisp subtle pops
+function playSound(type: 'match' | 'message', isMuted: boolean) {
+  if (isMuted || typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'match') {
+      // Pleasant dual chime
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12); // A5
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.28);
+    } else {
+      // Subtle pop on incoming message
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.14);
+    }
+  } catch {}
 }
 
 export default function ChatPage() {
@@ -31,14 +66,31 @@ export default function ChatPage() {
   const [reportReason, setReportReason] = useState('inappropriate');
   const [reportNotes, setReportNotes] = useState('');
   const [endReasonNotice, setEndReasonNotice] = useState<string | null>(null);
+  const [partnerIsTyping, setPartnerIsTyping] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   const supabase = createClient();
+  const typingChannelRef = useRef<any>(null);
+  const typingTimerRef = useRef<any>(null);
+  const lastTypingSentRef = useRef<number>(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollIntervalRef = useRef<any>(null);
+  const activeSessionRef = useRef<string | null>(null);
 
-  // Auto scroll messages
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const prevMsgCountRef = useRef<number>(0);
+
+  // Auto scroll the inner chat container only (preventing page window from jumping)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = chatContainerRef.current;
+    if (container) {
+      // Smoothly scroll the inner messages container to bottom without scrolling the whole webpage
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+    prevMsgCountRef.current = messages.length;
   }, [messages]);
 
   // Auth setup on mount
@@ -62,7 +114,7 @@ export default function ChatPage() {
           setCurrentUser(data.user);
           await checkProfile(data.user.id);
         } else if (error) {
-          setErrorMsg('Authentication error. Please verify anonymous sign-in is enabled in Supabase.');
+          setErrorMsg(`Authentication error: ${error.message}. (Status: ${error.status || 'unknown'})`);
         }
       }
     } catch (e: any) {
@@ -89,11 +141,35 @@ export default function ChatPage() {
     }
   };
 
+  // Clean up active session when user leaves page, clicks home/links, or closes tab
+  useEffect(() => {
+    activeSessionRef.current = sessionId;
+  }, [sessionId]);
+
+  useEffect(() => {
+    const handleTerminate = () => {
+      const activeId = activeSessionRef.current;
+      if (activeId) {
+        // Asynchronously end session
+        supabase.rpc('end_session', { p_session_id: activeId, p_reason: 'left' }).then(() => {});
+      }
+    };
+
+    window.addEventListener('beforeunload', handleTerminate);
+    window.addEventListener('pagehide', handleTerminate);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleTerminate);
+      window.removeEventListener('pagehide', handleTerminate);
+      handleTerminate();
+    };
+  }, []);
+
   // Realtime subscription for active chat session
   useEffect(() => {
     if (!sessionId) return;
 
-    // Load initial messages for session
+    // Load messages for session only if changed
     const fetchSessionMessages = async () => {
       const { data } = await supabase
         .from('messages')
@@ -102,14 +178,20 @@ export default function ChatPage() {
         .order('created_at', { ascending: true });
 
       if (data) {
-        setMessages(data as MessageItem[]);
+        setMessages((prev) => {
+          if (prev.length === data.length && prev[prev.length - 1]?.id === data[data.length - 1]?.id) {
+            return prev; // No changes, do NOT trigger state update or scroll
+          }
+          return data as MessageItem[];
+        });
       }
     };
     fetchSessionMessages();
 
     // Subscribe to new messages
-    const channel = supabase
-      .channel(`session-${sessionId}`)
+    const channel = supabase.channel(`session-${sessionId}`);
+    typingChannelRef.current = channel;
+    channel
       .on(
         'postgres_changes',
         {
@@ -122,10 +204,24 @@ export default function ChatPage() {
           const newMsg = payload.new as MessageItem;
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMsg.id)) return prev;
+            // Play pop sound if sender is partner
+            if (currentUser && newMsg.sender_id !== currentUser.id) {
+              playSound('message', isMuted);
+              setPartnerIsTyping(false);
+            }
             return [...prev, newMsg];
           });
         }
       )
+      .on('broadcast', { event: 'typing' }, (payload: any) => {
+        if (currentUser && payload.payload?.sender_id !== currentUser.id) {
+          setPartnerIsTyping(true);
+          if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+          typingTimerRef.current = setTimeout(() => {
+            setPartnerIsTyping(false);
+          }, 2500);
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -136,17 +232,47 @@ export default function ChatPage() {
         },
         (payload: any) => {
           if (payload.new && payload.new.status === 'ended') {
-            setChatState('ended');
-            setEndReasonNotice(payload.new.end_reason || 'Partner disconnected');
+            cleanupSessionAndSearchNext(payload.new.end_reason || 'Stranger left the conversation');
           }
         }
       )
       .subscribe();
 
+    // Check if session has been ended by partner
+    const checkSessionState = async () => {
+      try {
+        const { data } = await supabase
+          .from('chat_sessions')
+          .select('status, end_reason')
+          .eq('id', sessionId)
+          .maybeSingle();
+
+        if (data && data.status === 'ended') {
+          // Partner left or skipped! Instantly transition
+          cleanupSessionAndSearchNext(data.end_reason || 'Stranger left the conversation');
+        }
+      } catch {}
+    };
+
+    // Backup polling every 1.2s for new messages and partner status
+    const syncInterval = setInterval(() => {
+      fetchSessionMessages();
+      checkSessionState();
+    }, 1200);
+
     return () => {
+      clearInterval(syncInterval);
       supabase.removeChannel(channel);
     };
   }, [sessionId]);
+
+  const cleanupSessionAndSearchNext = (reason: string) => {
+    setEndReasonNotice(reason);
+    setSessionId(null);
+    setMessages([]);
+    // Automatically start searching for a new stranger
+    handleStartSearch();
+  };
 
   const cleanupQueuePoll = () => {
     if (pollIntervalRef.current) {
@@ -177,8 +303,9 @@ export default function ChatPage() {
       }
 
       if (data && data.status === 'matched') {
+        activeSessionRef.current = data.session_id;
         setSessionId(data.session_id);
-        setChatState('connected');
+        setChatState('connected'); playSound('match', isMuted);
       } else if (data && data.status === 'waiting') {
         setChatState('waiting');
         startQueuePolling();
@@ -199,8 +326,9 @@ export default function ChatPage() {
         const { data } = await supabase.rpc('check_queue_status');
         if (data && data.status === 'matched' && data.session_id) {
           cleanupQueuePoll();
+          activeSessionRef.current = data.session_id;
           setSessionId(data.session_id);
-          setChatState('connected');
+          setChatState('connected'); playSound('match', isMuted);
         }
       } catch {
         // Continue polling
@@ -216,6 +344,19 @@ export default function ChatPage() {
     setChatState('idle');
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputMessage(e.target.value);
+    const now = Date.now();
+    if (typingChannelRef.current && currentUser && now - lastTypingSentRef.current > 1500) {
+      lastTypingSentRef.current = now;
+      typingChannelRef.current.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { sender_id: currentUser.id }
+      }).catch(() => {});
+    }
+  };
+
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputMessage.trim() || !sessionId || chatState !== 'connected') return;
@@ -227,14 +368,25 @@ export default function ChatPage() {
     }
 
     setInputMessage('');
+    // Optimistic local preview
+    if (currentUser) {
+      const tempMsg: MessageItem = {
+        id: 'temp-' + Date.now(),
+        sender_id: currentUser.id,
+        body: text,
+        created_at: new Date().toISOString()
+      };
+      setMessages((prev) => [...prev, tempMsg]);
+    }
+
     try {
-      const { error } = await supabase.rpc('send_message', {
+      const { data, error } = await supabase.rpc('send_message', {
         p_session_id: sessionId,
         p_body: text
       });
 
       if (error) {
-        setErrorMsg(error.message);
+        setErrorMsg('Failed to send: ' + error.message);
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to send');
@@ -307,7 +459,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col mx-auto w-full max-w-4xl px-4 py-6 sm:px-6">
+    <div className="flex flex-1 flex-col mx-auto w-full max-w-4xl px-4 py-3 sm:px-6 h-[calc(100vh-4.2rem)] max-h-[calc(100vh-4.2rem)] overflow-hidden">
       {/* Top Banner & Session Status */}
       <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-4">
         <div>
@@ -333,6 +485,13 @@ export default function ChatPage() {
 
         {chatState === 'connected' && (
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsMuted(prev => !prev)}
+              className="px-2 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700 text-xs text-gray-400 hover:text-white transition-colors"
+              title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
+            >
+              {isMuted ? <VolumeX className="h-4 w-4 text-gray-500" /> : <Volume2 className="h-4 w-4 text-cyan-400" />}
+            </button>
             <button
               onClick={handleSkip}
               className="px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-white transition-colors"
@@ -371,7 +530,7 @@ export default function ChatPage() {
       )}
 
       {/* Main Conversation or Waiting Body */}
-      <div className="flex-1 flex flex-col min-h-[460px] rounded-2xl border border-gray-800 bg-[#0E1322] overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 rounded-2xl border border-gray-800 bg-[#0E1322] overflow-hidden">
         {chatState === 'idle' && (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400 mb-4 shadow-inner">
@@ -416,7 +575,7 @@ export default function ChatPage() {
         )}
 
         {chatState === 'connected' && (
-          <div className="flex-1 flex flex-col p-4 overflow-y-auto space-y-3">
+          <div ref={chatContainerRef} className="flex-1 flex flex-col p-4 overflow-y-auto min-h-0 space-y-3">
             <div className="text-center py-2 text-xs text-gray-500 border-b border-gray-800/60 mb-2">
               You are now chatting with Stranger. Say hello!
             </div>
@@ -449,6 +608,17 @@ export default function ChatPage() {
                 </div>
               );
             })}
+            {partnerIsTyping && (
+              <div className="flex items-center gap-2 text-xs text-gray-400 px-1 py-1 animate-pulse">
+                <span className="flex h-2 w-2 rounded-full bg-cyan-400"></span>
+                <span>Stranger is typing</span>
+                <span className="flex gap-1 items-center">
+                  <span className="h-1 w-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                  <span className="h-1 w-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                  <span className="h-1 w-1 bg-gray-400 rounded-full animate-bounce"></span>
+                </span>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         )}
@@ -488,7 +658,7 @@ export default function ChatPage() {
             <input
               type="text"
               value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
+              onChange={handleInputChange}
               placeholder="Type your message... (Enter to send)"
               maxLength={APP_CONFIG.maxMessageLength}
               className="flex-1 rounded-xl border border-gray-700 bg-gray-900/80 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"

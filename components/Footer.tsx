@@ -1,7 +1,17 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { APP_CONFIG } from '@/lib/constants';
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  // Hide footer on the chat page for an app-like single-screen experience
+  if (pathname === '/chat') {
+    return null;
+  }
+
   return (
     <footer className="border-t border-gray-800/80 bg-[#090D15] py-10 text-gray-400">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
