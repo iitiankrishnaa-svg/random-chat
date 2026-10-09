@@ -17,13 +17,29 @@ interface MessageItem {
   created_at: string;
 }
 
-// Zero-asset Web Audio synth for crisp subtle pops
+// Global audio context singleton with auto-resume for browser autoplay policies
+let globalAudioCtx: AudioContext | null = null;
+
+function getAudioContext(): AudioContext | null {
+  if (typeof window === 'undefined') return null;
+  if (!globalAudioCtx) {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioContextClass) {
+      globalAudioCtx = new AudioContextClass();
+    }
+  }
+  if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+    globalAudioCtx.resume().catch(() => {});
+  }
+  return globalAudioCtx;
+}
+
 function playSound(type: 'match' | 'message', isMuted: boolean) {
   if (isMuted || typeof window === 'undefined') return;
   try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
@@ -31,23 +47,23 @@ function playSound(type: 'match' | 'message', isMuted: boolean) {
     gain.connect(ctx.destination);
 
     if (type === 'match') {
-      // Pleasant dual chime
+      // Bright chime
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12); // A5
-      gain.gain.setValueAtTime(0.12, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+      osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+      osc.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.15); // C6
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
       osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.28);
+      osc.stop(ctx.currentTime + 0.35);
     } else {
-      // Subtle pop on incoming message
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + 0.08);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
+      // Distinct crisp pop on message arrival
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
       osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.14);
+      osc.stop(ctx.currentTime + 0.15);
     }
   } catch {}
 }
@@ -180,7 +196,15 @@ export default function ChatPage() {
       if (data) {
         setMessages((prev) => {
           if (prev.length === data.length && prev[prev.length - 1]?.id === data[data.length - 1]?.id) {
-            return prev; // No changes, do NOT trigger state update or scroll
+            return prev;
+          }
+          // If new message from stranger arrived, play pop
+          if (data.length > prev.length && prev.length > 0) {
+            const latest = data[data.length - 1];
+            if (currentUser && latest.sender_id !== currentUser.id) {
+              playSound('message', isMuted);
+              setPartnerIsTyping(false);
+            }
           }
           return data as MessageItem[];
         });
@@ -486,7 +510,13 @@ export default function ChatPage() {
         {chatState === 'connected' && (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setIsMuted(prev => !prev)}
+              onClick={() => {
+                setIsMuted(prev => {
+                  const nextState = !prev;
+                  if (!nextState) playSound('message', false); // Play sample pop when unmuting
+                  return nextState;
+                });
+              }}
               className="px-2 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700 text-xs text-gray-400 hover:text-white transition-colors"
               title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
             >
