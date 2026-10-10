@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { APP_CONFIG } from '@/lib/constants';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://strangerspace.vercel.app';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://randomchat-alpha.vercel.app';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
