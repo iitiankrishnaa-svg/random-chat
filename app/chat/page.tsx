@@ -99,8 +99,10 @@ export default function ChatPage() {
   const [endReasonNotice, setEndReasonNotice] = useState<string | null>(null);
   const [partnerIsTyping, setPartnerIsTyping] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [mobileHeight, setMobileHeight] = useState<number | null>(null);
 
   const supabase = createClient();
+  const inputRef = useRef<HTMLInputElement>(null);
   const typingChannelRef = useRef<any>(null);
   const typingTimerRef = useRef<any>(null);
   const lastTypingSentRef = useRef<number>(0);
@@ -201,6 +203,42 @@ export default function ChatPage() {
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
+  // Dynamically lock mobile container to visualViewport when virtual keyboard opens/closes
+  // Desktop PC (>= 640px) is 100% unaffected and remains untouched
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleViewportChange = () => {
+      if (window.innerWidth < 640) {
+        if (window.visualViewport) {
+          setMobileHeight(window.visualViewport.height);
+          // If browser attempted to scroll the window when keyboard appeared, snap back to 0
+          if (window.scrollY !== 0) {
+            window.scrollTo(0, 0);
+          }
+        }
+      } else {
+        setMobileHeight(null);
+      }
+    };
+
+    handleViewportChange();
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+      window.visualViewport.addEventListener('scroll', handleViewportChange);
+    }
+    window.addEventListener('resize', handleViewportChange);
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+        window.visualViewport.removeEventListener('scroll', handleViewportChange);
+      }
+      window.removeEventListener('resize', handleViewportChange);
     };
   }, []);
 
@@ -417,6 +455,11 @@ export default function ChatPage() {
     }
 
     setInputMessage('');
+    // Keep input focused so mobile virtual keyboard stays open after sending
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+
     // Optimistic local preview
     if (currentUser) {
       const tempMsg: MessageItem = {
@@ -508,7 +551,19 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="fixed inset-0 top-0 sm:top-16 flex flex-col bg-[#080C16] text-gray-100 overflow-hidden overscroll-none select-none">
+    <div
+      style={
+        mobileHeight
+          ? {
+              height: `${mobileHeight}px`,
+              maxHeight: `${mobileHeight}px`,
+              top: 0,
+              bottom: 'auto'
+            }
+          : undefined
+      }
+      className="fixed inset-0 top-0 sm:top-16 flex flex-col bg-[#080C16] text-gray-100 overflow-hidden overscroll-none select-none"
+    >
       {/* Subtle ambient luxury backdrop glow */}
       <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[320px] bg-indigo-600/10 rounded-full blur-[140px] opacity-70" />
       <div className="pointer-events-none absolute bottom-0 right-10 w-[400px] h-[250px] bg-cyan-600/5 rounded-full blur-[120px] opacity-60" />
@@ -790,6 +845,7 @@ export default function ChatPage() {
                 className="flex-shrink-0 border-t border-white/[0.08] bg-[#090D18]/95 backdrop-blur-md p-2.5 sm:p-3.5 flex items-center gap-2 sm:gap-3"
               >
                 <input
+                  ref={inputRef}
                   type="text"
                   value={inputMessage}
                   onChange={handleInputChange}
@@ -800,8 +856,13 @@ export default function ChatPage() {
                 />
                 <button
                   type="submit"
-                  disabled={!inputMessage.trim()}
-                  className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white shadow-lg shadow-indigo-600/25 disabled:opacity-30 disabled:scale-100 disabled:shadow-none transition-all flex-shrink-0"
+                  onMouseDown={(e) => {
+                    // Prevent input from losing focus when clicking Send
+                    e.preventDefault();
+                  }}
+                  className={`flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white shadow-lg shadow-indigo-600/25 transition-all flex-shrink-0 ${
+                    !inputMessage.trim() ? 'opacity-30 cursor-not-allowed' : ''
+                  }`}
                   title="Send Message"
                 >
                   <Send className="h-4 w-4" />
