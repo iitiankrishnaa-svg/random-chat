@@ -22,6 +22,7 @@ import {
   Sparkles,
   Lock
 } from 'lucide-react';
+import OnlineBadge from '@/components/OnlineBadge';
 
 type ChatState = 'idle' | 'connecting' | 'waiting' | 'matched' | 'connected' | 'ending' | 'ended' | 'error';
 
@@ -607,7 +608,7 @@ export default function ChatPage() {
             </div>
 
             {/* Right: Distinct Toolbar Action Buttons */}
-            {chatState === 'connected' && (
+            {chatState === 'connected' ? (
               <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 {/* Sound Mute Toggle */}
                 <button
@@ -667,6 +668,10 @@ export default function ChatPage() {
                   <Flag className="h-3.5 w-3.5" />
                 </button>
               </div>
+            ) : (
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <OnlineBadge variant="toolbar" />
+              </div>
             )}
           </header>
 
@@ -713,6 +718,8 @@ export default function ChatPage() {
                   <span className="flex items-center gap-1">
                     <Lock className="h-3 w-3 text-cyan-400" /> Ephemeral Messages
                   </span>
+                  <span>&bull;</span>
+                  <OnlineBadge variant="toolbar" />
                 </div>
               </div>
             )}
@@ -739,6 +746,9 @@ export default function ChatPage() {
                 <p className="mt-1 text-xs text-zinc-400 max-w-xs leading-relaxed">
                   You will connect automatically as soon as another adult user joins.
                 </p>
+                <div className="mt-4">
+                  <OnlineBadge variant="toolbar" />
+                </div>
                 <button
                   onClick={handleCancelSearch}
                   className="mt-6 px-5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-zinc-300 hover:text-white transition-all active:scale-95"

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MessageSquare, Shield, HelpCircle, UserCheck } from 'lucide-react';
 import { APP_CONFIG } from '@/lib/constants';
+import OnlineBadge from '@/components/OnlineBadge';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -16,14 +17,18 @@ export default function Navbar() {
       }`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 shadow-md shadow-indigo-500/20">
-            <MessageSquare className="h-5 w-5 text-white" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">
-            {APP_CONFIG.name}
-          </span>
-        </Link>
+        <div className="flex items-center gap-2.5 sm:gap-4">
+          <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 shadow-md shadow-indigo-500/20">
+              <MessageSquare className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white">
+              {APP_CONFIG.name}
+            </span>
+          </Link>
+
+          <OnlineBadge variant="navbar" />
+        </div>
 
         <nav className="flex items-center gap-1 sm:gap-2">
           <Link

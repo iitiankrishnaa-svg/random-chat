@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { APP_CONFIG } from '@/lib/constants';
+import OnlineBadge from '@/components/OnlineBadge';
 
 export default function HomePage() {
   const faqs = [
@@ -42,12 +43,16 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative w-full overflow-hidden px-4 pt-16 pb-20 sm:px-6 lg:px-8 text-center">
         <div className="mx-auto max-w-4xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1 text-xs font-medium text-indigo-300 mb-6">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-            </span>
-            Adult-Only Pilot &bull; 18+ Only &bull; 100% Free
+          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mb-6">
+            <OnlineBadge variant="hero" />
+
+            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1 text-xs font-medium text-indigo-300">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+              </span>
+              Adult-Only Pilot &bull; 18+ Only &bull; 100% Free
+            </div>
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
