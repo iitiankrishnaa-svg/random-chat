@@ -30,6 +30,9 @@ export const metadata: Metadata = {
   creator: 'StrangerSpace',
   publisher: 'StrangerSpace',
   applicationName: 'StrangerSpace',
+  verification: {
+    google: 'veHlAsJJBimNyq4yNLRBbhyNBqiNJk8XbjLyt4wi_6Y',
+  },
   alternates: {
     canonical: siteUrl,
   },
