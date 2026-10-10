@@ -5,7 +5,22 @@ import { createClient } from '@/lib/supabase/client';
 import { APP_CONFIG, REPORT_REASONS } from '@/lib/constants';
 import { formatTime, sanitizeText } from '@/lib/utils';
 import {
-  Send, UserX, Flag, RefreshCw, Shield, AlertTriangle, XCircle, LogOut, Check, Volume2, VolumeX
+  Send,
+  UserX,
+  Flag,
+  RefreshCw,
+  Shield,
+  AlertTriangle,
+  XCircle,
+  LogOut,
+  Check,
+  Volume2,
+  VolumeX,
+  FastForward,
+  ArrowRight,
+  MessageSquare,
+  Sparkles,
+  Lock
 } from 'lucide-react';
 
 type ChatState = 'idle' | 'connecting' | 'waiting' | 'matched' | 'connected' | 'ending' | 'ended' | 'error';
@@ -100,7 +115,6 @@ export default function ChatPage() {
   useEffect(() => {
     const container = chatContainerRef.current;
     if (container) {
-      // Smoothly scroll the inner messages container to bottom without scrolling the whole webpage
       container.scrollTo({
         top: container.scrollHeight,
         behavior: 'smooth'
@@ -178,6 +192,15 @@ export default function ChatPage() {
       window.removeEventListener('beforeunload', handleTerminate);
       window.removeEventListener('pagehide', handleTerminate);
       handleTerminate();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Lock body scrolling when on /chat to ensure top bar stays fixed at all times
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
     };
   }, []);
 
@@ -329,7 +352,8 @@ export default function ChatPage() {
       if (data && data.status === 'matched') {
         activeSessionRef.current = data.session_id;
         setSessionId(data.session_id);
-        setChatState('connected'); playSound('match', isMuted);
+        setChatState('connected');
+        playSound('match', isMuted);
       } else if (data && data.status === 'waiting') {
         setChatState('waiting');
         startQueuePolling();
@@ -352,7 +376,8 @@ export default function ChatPage() {
           cleanupQueuePoll();
           activeSessionRef.current = data.session_id;
           setSessionId(data.session_id);
-          setChatState('connected'); playSound('match', isMuted);
+          setChatState('connected');
+          playSound('match', isMuted);
         }
       } catch {
         // Continue polling
@@ -483,256 +508,338 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col mx-auto w-full max-w-4xl px-4 py-3 sm:px-6 h-[calc(100vh-4.2rem)] max-h-[calc(100vh-4.2rem)] overflow-hidden">
-      {/* Top Banner & Session Status */}
-      <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-4">
-        <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <span>StrangerSpace Chat</span>
+    <div className="fixed inset-0 top-0 sm:top-16 flex flex-col bg-[#080C16] text-gray-100 overflow-hidden overscroll-none select-none">
+      {/* Subtle ambient luxury backdrop glow */}
+      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[320px] bg-indigo-600/10 rounded-full blur-[140px] opacity-70" />
+      <div className="pointer-events-none absolute bottom-0 right-10 w-[400px] h-[250px] bg-cyan-600/5 rounded-full blur-[120px] opacity-60" />
+
+      {/* Main Responsive Chat Layout Panel */}
+      <div className="flex-1 flex flex-col mx-auto w-full max-w-4xl lg:max-w-5xl sm:px-6 sm:py-3.5 min-h-0 overflow-hidden relative">
+        <div className="flex-1 flex flex-col min-h-0 sm:rounded-2xl sm:border sm:border-white/[0.08] sm:bg-[#0D1220]/80 sm:backdrop-blur-xl sm:shadow-2xl overflow-hidden relative">
+
+          {/* PERMANENT TOP CHAT TOOLBAR */}
+          <header className="flex-shrink-0 flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 border-b border-white/[0.08] bg-[#090D18]/95 backdrop-blur-md z-30 gap-2">
+            {/* Left: Brand Identity & Live Status */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-bold text-sm sm:text-base tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent truncate">
+                  StrangerSpace
+                </span>
+                {chatState === 'connected' && (
+                  <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 shadow-[0_0_10px_rgba(16,185,129,0.15)]">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                    </span>
+                    <span className="hidden sm:inline">Connected</span>
+                    <span className="sm:hidden">Online</span>
+                  </span>
+                )}
+                {chatState === 'waiting' && (
+                  <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/25">
+                    <RefreshCw className="h-3 w-3 animate-spin text-cyan-400" />
+                    <span className="hidden sm:inline">Finding a Stranger...</span>
+                    <span className="sm:hidden">Finding...</span>
+                  </span>
+                )}
+                {chatState === 'connecting' && (
+                  <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/25">
+                    <RefreshCw className="h-3 w-3 animate-spin text-indigo-400" />
+                    <span>Connecting...</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Distinct Toolbar Action Buttons */}
             {chatState === 'connected' && (
-              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Connected with Stranger
-              </span>
-            )}
-            {chatState === 'waiting' && (
-              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
-                <RefreshCw className="h-3 w-3 animate-spin" />
-                Finding a Stranger...
-              </span>
-            )}
-          </h1>
-          <p className="text-xs text-gray-500 mt-0.5">
-            1-on-1 random text chat. No real names or contact details shared.
-          </p>
-        </div>
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                {/* Sound Mute Toggle */}
+                <button
+                  onClick={() => {
+                    setIsMuted((prev) => {
+                      const nextState = !prev;
+                      if (!nextState) playSound('message', false);
+                      return nextState;
+                    });
+                  }}
+                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 hover:text-white transition-all active:scale-95"
+                  title={isMuted ? 'Unmute notification sounds' : 'Mute notification sounds'}
+                >
+                  {isMuted ? (
+                    <VolumeX className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-500" />
+                  ) : (
+                    <Volume2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-cyan-400" />
+                  )}
+                </button>
 
-        {chatState === 'connected' && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setIsMuted(prev => {
-                  const nextState = !prev;
-                  if (!nextState) playSound('message', false); // Play sample pop when unmuting
-                  return nextState;
-                });
-              }}
-              className="px-2 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700 text-xs text-gray-400 hover:text-white transition-colors"
-              title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
-            >
-              {isMuted ? <VolumeX className="h-4 w-4 text-gray-500" /> : <Volume2 className="h-4 w-4 text-cyan-400" />}
-            </button>
-            <button
-              onClick={handleSkip}
-              className="px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-white transition-colors"
-            >
-              Skip
-            </button>
-            <button
-              onClick={() => setShowBlockModal(true)}
-              className="px-2.5 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700 text-xs font-medium text-gray-400 hover:text-white transition-colors"
-              title="Block Stranger"
-            >
-              <UserX className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setShowReportModal(true)}
-              className="px-2.5 py-1.5 rounded-lg border border-gray-800 hover:border-rose-900/40 text-xs font-medium text-gray-400 hover:text-rose-400 transition-colors"
-              title="Report Stranger"
-            >
-              <Flag className="h-4 w-4" />
-            </button>
-            <button
-              onClick={handleLeave}
-              className="px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-xs font-semibold text-rose-300 transition-colors"
-            >
-              Leave
-            </button>
-          </div>
-        )}
-      </div>
+                {/* SKIP BUTTON - High-contrast metallic/action style */}
+                <button
+                  onClick={handleSkip}
+                  className="px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-zinc-800 to-zinc-700 hover:from-zinc-700 hover:to-zinc-600 border border-white/10 hover:border-white/20 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all flex-shrink-0"
+                  title="Skip to next stranger"
+                >
+                  <FastForward className="h-3.5 w-3.5 text-cyan-400" />
+                  <span>Skip</span>
+                </button>
 
-      {errorMsg && (
-        <div className="mb-4 p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs text-rose-300 flex items-center justify-between">
-          <span>{errorMsg}</span>
-          <button onClick={() => setErrorMsg('')}><XCircle className="h-4 w-4" /></button>
-        </div>
-      )}
+                {/* BLOCK BUTTON - Amber Safety Action (Requires Confirmation) */}
+                <button
+                  onClick={() => setShowBlockModal(true)}
+                  className="px-2 sm:px-3 py-1.5 rounded-xl border border-amber-500/25 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 hover:text-amber-200 text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all shadow-sm flex-shrink-0"
+                  title="Block Stranger"
+                >
+                  <UserX className="h-3.5 w-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Block</span>
+                </button>
 
-      {/* Main Conversation or Waiting Body */}
-      <div className="flex-1 flex flex-col min-h-0 rounded-2xl border border-gray-800 bg-[#0E1322] overflow-hidden">
-        {chatState === 'idle' && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400 mb-4 shadow-inner">
-              <Shield className="h-8 w-8" />
-            </div>
-            <h2 className="text-xl font-bold text-white">Ready to Talk?</h2>
-            <p className="mt-2 text-sm text-gray-400 max-w-sm">
-              Press the button below to connect with another random stranger in real time.
-            </p>
-            <button
-              onClick={handleStartSearch}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 hover:from-indigo-500 hover:to-cyan-500 transition-all"
-            >
-              Find a Stranger
-            </button>
-          </div>
-        )}
+                {/* LEAVE BUTTON - Refined Rose Danger Style */}
+                <button
+                  onClick={handleLeave}
+                  className="px-2.5 sm:px-3.5 py-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all shadow-sm flex-shrink-0"
+                  title="Leave chat session"
+                >
+                  <LogOut className="h-3.5 w-3.5 text-rose-400" />
+                  <span>Leave</span>
+                </button>
 
-        {chatState === 'connecting' && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <RefreshCw className="h-8 w-8 animate-spin text-indigo-400 mb-3" />
-            <h3 className="text-base font-semibold text-white">Connecting to Matchmaker...</h3>
-          </div>
-        )}
-
-        {chatState === 'waiting' && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 mb-4">
-              <RefreshCw className="h-7 w-7 animate-spin" />
-            </div>
-            <h2 className="text-lg font-bold text-white">Waiting for an available stranger...</h2>
-            <p className="mt-1 text-xs text-gray-400 max-w-xs">
-              Matching happens automatically as soon as another eligible user joins.
-            </p>
-            <button
-              onClick={handleCancelSearch}
-              className="mt-6 px-5 py-2 rounded-xl border border-gray-700 bg-gray-800 text-xs font-semibold text-gray-300 hover:text-white"
-            >
-              Cancel Search
-            </button>
-          </div>
-        )}
-
-        {chatState === 'connected' && (
-          <div ref={chatContainerRef} className="flex-1 flex flex-col p-4 overflow-y-auto min-h-0 space-y-3">
-            <div className="text-center py-2 text-xs text-gray-500 border-b border-gray-800/60 mb-2">
-              You are now chatting with Stranger. Say hello!
-            </div>
-
-            {messages.length === 0 && (
-              <div className="flex-1 flex items-center justify-center text-xs text-gray-600">
-                No messages yet. Send the first message below.
+                {/* REPORT BUTTON - Discreet Flag */}
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  className="p-1.5 sm:p-2 rounded-xl border border-white/5 bg-white/[0.03] hover:border-rose-500/20 hover:bg-rose-500/10 text-zinc-400 hover:text-rose-400 transition-colors active:scale-95"
+                  title="Report Stranger for violation"
+                >
+                  <Flag className="h-3.5 w-3.5" />
+                </button>
               </div>
             )}
+          </header>
 
-            {messages.map((msg) => {
-              const isMine = currentUser && msg.sender_id === currentUser.id;
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
-                >
-                  <div className="text-[10px] text-gray-500 mb-0.5 px-1">
-                    {isMine ? 'You' : 'Stranger'} &bull; {formatTime(msg.created_at)}
-                  </div>
-                  <div
-                    className={`max-w-md rounded-2xl px-4 py-2.5 text-sm leading-relaxed break-words ${
-                      isMine
-                        ? 'bg-indigo-600 text-white rounded-br-none shadow-md shadow-indigo-600/15'
-                        : 'bg-gray-800 text-gray-100 rounded-bl-none border border-gray-700/60'
-                    }`}
-                  >
-                    {msg.body}
+          {/* Error Banner if any */}
+          {errorMsg && (
+            <div className="mx-3 my-2 p-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs text-rose-300 flex items-center justify-between flex-shrink-0">
+              <span className="truncate pr-2">{errorMsg}</span>
+              <button onClick={() => setErrorMsg('')} className="p-1 hover:text-white transition-colors">
+                <XCircle className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          {/* MAIN CONVERSATION / STATE BODY */}
+          <div className="flex-1 flex flex-col min-h-0 bg-[#0A0E1A]/60 overflow-hidden relative">
+
+            {/* IDLE STATE */}
+            {chatState === 'idle' && (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto">
+                <div className="relative mb-5">
+                  <div className="absolute inset-0 rounded-2xl bg-indigo-500/20 blur-xl" />
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 to-cyan-500/10 border border-white/10 text-indigo-400 shadow-xl">
+                    <MessageSquare className="h-8 w-8" />
                   </div>
                 </div>
-              );
-            })}
-            {partnerIsTyping && (
-              <div className="flex items-center gap-2 text-xs text-gray-400 px-1 py-1 animate-pulse">
-                <span className="flex h-2 w-2 rounded-full bg-cyan-400"></span>
-                <span>Stranger is typing</span>
-                <span className="flex gap-1 items-center">
-                  <span className="h-1 w-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                  <span className="h-1 w-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                  <span className="h-1 w-1 bg-gray-400 rounded-full animate-bounce"></span>
-                </span>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                  Ready to Meet Someone New?
+                </h2>
+                <p className="mt-2 text-xs sm:text-sm text-zinc-400 max-w-sm leading-relaxed">
+                  Start an instant, randomized 1-on-1 text conversation. Zero logs, anonymous, and encrypted.
+                </p>
+                <button
+                  onClick={handleStartSearch}
+                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:brightness-110 active:scale-95 transition-all"
+                >
+                  <span>Find a Stranger</span>
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-[11px] text-zinc-400">
+                  <span className="flex items-center gap-1">
+                    <Shield className="h-3 w-3 text-emerald-400" /> 18+ Adults Pilot
+                  </span>
+                  <span>&bull;</span>
+                  <span className="flex items-center gap-1">
+                    <Lock className="h-3 w-3 text-cyan-400" /> Ephemeral Messages
+                  </span>
+                </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
 
-        {chatState === 'ended' && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-800 text-gray-400 mb-4">
-              <LogOut className="h-7 w-7" />
-            </div>
-            <h2 className="text-lg font-bold text-white">Conversation Ended</h2>
-            <p className="mt-1 text-xs text-gray-400">
-              {endReasonNotice || 'Stranger has disconnected or left the chat.'}
-            </p>
-            <div className="mt-6 flex items-center gap-3">
-              <button
-                onClick={handleStartSearch}
-                className="px-6 py-2.5 rounded-xl bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
-              >
-                Find New Stranger
-              </button>
-              <button
-                onClick={() => setChatState('idle')}
-                className="px-4 py-2.5 rounded-xl border border-gray-700 bg-gray-800 text-sm font-medium text-gray-300 hover:text-white"
-              >
-                Return Home
-              </button>
-            </div>
-          </div>
-        )}
+            {/* CONNECTING STATE */}
+            {chatState === 'connecting' && (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 mb-4">
+                  <RefreshCw className="h-8 w-8 animate-spin text-indigo-400" />
+                </div>
+                <h3 className="text-base font-semibold text-white">Contacting Matchmaker...</h3>
+                <p className="mt-1 text-xs text-zinc-400">Securing a randomized private session.</p>
+              </div>
+            )}
 
-        {/* Input Bar */}
-        {chatState === 'connected' && (
-          <form
-            onSubmit={handleSendMessage}
-            className="border-t border-gray-800 bg-[#0B0F19] p-3 flex items-center gap-2"
-          >
-            <input
-              type="text"
-              value={inputMessage}
-              onChange={handleInputChange}
-              placeholder="Type your message... (Enter to send)"
-              maxLength={APP_CONFIG.maxMessageLength}
-              className="flex-1 rounded-xl border border-gray-700 bg-gray-900/80 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
-              autoFocus
-            />
-            <button
-              type="submit"
-              disabled={!inputMessage.trim()}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-40 transition-colors"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          </form>
-        )}
+            {/* WAITING IN QUEUE STATE */}
+            {chatState === 'waiting' && (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mb-5">
+                  <div className="absolute inset-0 rounded-full border border-cyan-400/30 animate-ping [animation-duration:2.5s]" />
+                  <RefreshCw className="h-8 w-8 animate-spin text-cyan-400" />
+                </div>
+                <h2 className="text-lg font-bold text-white">Searching for an available stranger...</h2>
+                <p className="mt-1 text-xs text-zinc-400 max-w-xs leading-relaxed">
+                  You will connect automatically as soon as another adult user joins.
+                </p>
+                <button
+                  onClick={handleCancelSearch}
+                  className="mt-6 px-5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-zinc-300 hover:text-white transition-all active:scale-95"
+                >
+                  Cancel Search
+                </button>
+              </div>
+            )}
+
+            {/* ACTIVE CONNECTED CONVERSATION - INDEPENDENTLY SCROLLABLE */}
+            {chatState === 'connected' && (
+              <div
+                ref={chatContainerRef}
+                className="flex-1 flex flex-col p-3.5 sm:p-5 overflow-y-auto overscroll-contain min-h-0 space-y-3.5 select-text"
+              >
+                {/* Welcome Encryption Notice */}
+                <div className="mx-auto max-w-sm rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center backdrop-blur-sm">
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-medium text-zinc-300">
+                    <Shield className="h-3.5 w-3.5 text-indigo-400" />
+                    <span>Encrypted & Anonymous Session</span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-zinc-400 leading-normal">
+                    Say hello! Be respectful. Messages vanish permanently when the chat ends.
+                  </p>
+                </div>
+
+                {messages.length === 0 && (
+                  <div className="flex-1 flex items-center justify-center text-xs text-zinc-400 py-10">
+                    No messages yet. Send the first message below.
+                  </div>
+                )}
+
+                {/* Message Bubbles */}
+                {messages.map((msg) => {
+                  const isMine = currentUser && msg.sender_id === currentUser.id;
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
+                    >
+                      <div className="text-[10px] text-zinc-400 mb-1 px-1 font-mono tracking-tight">
+                        {isMine ? 'You' : 'Stranger'} &bull; {formatTime(msg.created_at)}
+                      </div>
+                      <div
+                        className={`rounded-2xl px-4 py-2.5 text-[14px] leading-relaxed break-words max-w-[85%] sm:max-w-md ${
+                          isMine
+                            ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-sm shadow-md shadow-indigo-950/30'
+                            : 'bg-[#161D31]/95 border border-white/[0.08] text-zinc-100 rounded-tl-sm shadow-sm'
+                        }`}
+                      >
+                        {msg.body}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Partner Typing Indicator */}
+                {partnerIsTyping && (
+                  <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-[#161D31]/80 px-3 py-1.5 w-fit text-xs text-zinc-400 shadow-sm animate-pulse">
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                    <span className="text-[11px] font-medium text-zinc-300">Stranger is typing</span>
+                    <span className="flex items-center gap-0.5 ml-0.5">
+                      <span className="h-1 w-1 rounded-full bg-cyan-400 animate-bounce [animation-delay:-0.3s]" />
+                      <span className="h-1 w-1 rounded-full bg-cyan-400 animate-bounce [animation-delay:-0.15s]" />
+                      <span className="h-1 w-1 rounded-full bg-cyan-400 animate-bounce" />
+                    </span>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+
+            {/* ENDED STATE */}
+            {chatState === 'ended' && (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-800/80 border border-white/10 text-zinc-400 mb-4 shadow-inner">
+                  <LogOut className="h-7 w-7" />
+                </div>
+                <h2 className="text-lg font-bold text-white">Conversation Ended</h2>
+                <p className="mt-1 text-xs text-zinc-400 max-w-sm">
+                  {endReasonNotice || 'Stranger has disconnected or left the chat.'}
+                </p>
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    onClick={handleStartSearch}
+                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white shadow-md shadow-indigo-600/25 active:scale-95 transition-all"
+                  >
+                    Find New Stranger
+                  </button>
+                  <button
+                    onClick={() => setChatState('idle')}
+                    className="px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-xs font-medium text-zinc-300 hover:text-white transition-all active:scale-95"
+                  >
+                    Return Home
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* PERMANENT PINNED MESSAGE COMPOSER */}
+            {chatState === 'connected' && (
+              <form
+                onSubmit={handleSendMessage}
+                className="flex-shrink-0 border-t border-white/[0.08] bg-[#090D18]/95 backdrop-blur-md p-2.5 sm:p-3.5 flex items-center gap-2 sm:gap-3"
+              >
+                <input
+                  type="text"
+                  value={inputMessage}
+                  onChange={handleInputChange}
+                  placeholder="Type your message... (Enter to send)"
+                  maxLength={APP_CONFIG.maxMessageLength}
+                  className="flex-1 min-w-0 rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.05] focus:bg-white/[0.06] px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm text-white placeholder-zinc-400 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/40 transition-all"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={!inputMessage.trim()}
+                  className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white shadow-lg shadow-indigo-600/25 disabled:opacity-30 disabled:scale-100 disabled:shadow-none transition-all flex-shrink-0"
+                  title="Send Message"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Age & Terms Gate Modal */}
+      {/* AGE & TERMS GATE CONFIRMATION MODAL */}
       {showAgeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-800 bg-[#0F1423] p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0F1424] p-6 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
+              <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
                 <Shield className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-bold text-white">Age & Rules Confirmation</h3>
             </div>
-            <p className="text-sm text-gray-300 leading-relaxed">
+            <p className="text-sm text-zinc-300 leading-relaxed">
               StrangerSpace is strictly an adult-only platform pilot for users aged 18 and older.
             </p>
-            <ul className="mt-3 space-y-2 text-xs text-gray-400 list-disc list-inside">
-              <li>You confirm you are at least 18 years old.</li>
+            <ul className="mt-3.5 space-y-2 text-xs text-zinc-400 list-disc list-inside">
+              <li>You confirm you are at least 18 years of age.</li>
               <li>You agree to our Community Guidelines and Terms of Use.</li>
               <li>You will not solicit, harass, scam, or share abusive content.</li>
             </ul>
             <div className="mt-6 flex items-center justify-end gap-3">
               <button
                 onClick={() => setShowAgeModal(false)}
-                className="px-4 py-2 rounded-xl border border-gray-700 text-xs font-semibold text-gray-400 hover:text-white"
+                className="px-4 py-2 rounded-xl border border-white/10 text-xs font-semibold text-zinc-400 hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmAgeGate}
-                className="px-5 py-2 rounded-xl bg-indigo-600 text-xs font-semibold text-white hover:bg-indigo-500"
+                className="px-5 py-2 rounded-xl bg-indigo-600 text-xs font-semibold text-white hover:bg-indigo-500 active:scale-95 shadow-md shadow-indigo-600/30 transition-all"
               >
                 I am 18+ and Agree
               </button>
@@ -741,24 +848,29 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Block Modal */}
+      {/* BLOCK CONFIRMATION MODAL */}
       {showBlockModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-800 bg-[#0F1423] p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-white mb-2">Block Stranger?</h3>
-            <p className="text-xs text-gray-400 leading-relaxed mb-6">
-              Blocking will immediately end this chat session and permanently prevent both of you from ever being matched again.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="w-full max-w-md rounded-2xl border border-amber-500/20 bg-[#0F1424] p-6 shadow-2xl">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Block Stranger?</h3>
+            </div>
+            <p className="text-xs text-zinc-400 leading-relaxed mb-6">
+              Blocking will immediately end this chat session and permanently prevent both of you from ever being matched together again.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => setShowBlockModal(false)}
-                className="px-4 py-2 rounded-xl border border-gray-700 text-xs font-semibold text-gray-400 hover:text-white"
+                className="px-4 py-2 rounded-xl border border-white/10 text-xs font-semibold text-zinc-400 hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmBlock}
-                className="px-5 py-2 rounded-xl bg-rose-600 text-xs font-semibold text-white hover:bg-rose-500"
+                className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-xs font-semibold text-white active:scale-95 transition-all shadow-md shadow-amber-600/25"
               >
                 Confirm Block
               </button>
@@ -767,20 +879,25 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Report Modal */}
+      {/* REPORT MODAL */}
       {showReportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-800 bg-[#0F1423] p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-white mb-2">Report Violation</h3>
-            <p className="text-xs text-gray-400 leading-relaxed mb-4">
-              Select the violation reason. Submitting ends the chat and queues the session for administrator review.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="w-full max-w-md rounded-2xl border border-rose-500/20 bg-[#0F1424] p-6 shadow-2xl">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
+                <Flag className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Report Violation</h3>
+            </div>
+            <p className="text-xs text-zinc-400 leading-relaxed mb-4">
+              Select the violation reason. Submitting immediately ends the chat and queues the session for moderator review.
             </p>
 
-            <label className="block text-xs font-semibold text-gray-300 mb-1">Reason:</label>
+            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Reason:</label>
             <select
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
-              className="w-full rounded-xl border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white mb-3"
+              className="w-full rounded-xl border border-white/10 bg-[#0A0E1A] px-3 py-2 text-xs text-white mb-3 focus:outline-none focus:border-indigo-500"
             >
               {REPORT_REASONS.map((r) => (
                 <option key={r.code} value={r.code}>
@@ -789,25 +906,25 @@ export default function ChatPage() {
               ))}
             </select>
 
-            <label className="block text-xs font-semibold text-gray-300 mb-1">Optional Notes:</label>
+            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Optional Notes:</label>
             <textarea
               value={reportNotes}
               onChange={(e) => setReportNotes(e.target.value)}
               rows={3}
               placeholder="Provide context for moderation..."
-              className="w-full rounded-xl border border-gray-700 bg-gray-900 p-3 text-xs text-white placeholder-gray-500 mb-4 focus:outline-none focus:border-indigo-500"
+              className="w-full rounded-xl border border-white/10 bg-[#0A0E1A] p-3 text-xs text-white placeholder-zinc-400 mb-4 focus:outline-none focus:border-indigo-500"
             />
 
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => setShowReportModal(false)}
-                className="px-4 py-2 rounded-xl border border-gray-700 text-xs font-semibold text-gray-400 hover:text-white"
+                className="px-4 py-2 rounded-xl border border-white/10 text-xs font-semibold text-zinc-400 hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmReport}
-                className="px-5 py-2 rounded-xl bg-rose-600 text-xs font-semibold text-white hover:bg-rose-500"
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-semibold text-white active:scale-95 transition-all shadow-md shadow-rose-600/25"
               >
                 Submit Report
               </button>
