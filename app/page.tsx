@@ -100,7 +100,7 @@ export default function HomePage() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="w-full border-t border-white/[0.08] bg-[#070A12] py-24 px-4 sm:px-6 lg:px-8 relative">
+      <section id="how-it-works" className="w-full border-t border-white/[0.08] bg-transparent py-24 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 mb-3">
@@ -149,7 +149,7 @@ export default function HomePage() {
       </section>
 
       {/* SEO Deep-Dive Content: Why StrangerSpace */}
-      <section className="w-full py-24 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08] bg-[#080C14]">
+      <section className="w-full py-24 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08] bg-transparent relative z-10">
         <div className="mx-auto max-w-5xl">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 mb-3">
@@ -216,7 +216,7 @@ export default function HomePage() {
       </section>
 
       {/* High-Intent FAQ Section (Rich Snippets for Google) */}
-      <section id="faq" className="w-full py-24 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08] bg-[#070A12] relative">
+      <section id="faq" className="w-full py-24 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08] bg-transparent relative z-10">
         <div className="mx-auto max-w-4xl relative z-10">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 p-2.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 mb-3 shadow-inner">

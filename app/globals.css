@@ -45,20 +45,25 @@ body {
   transform: translateY(-2px);
 }
 
-/* Custom Sleek Scrollbar */
+/* Custom Wider Modern Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 11px;
+  height: 11px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(8, 12, 20, 0.6);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.22);
   border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.28);
+  background-color: rgba(99, 102, 241, 0.55);
+}
+::-webkit-scrollbar-thumb:active {
+  background-color: rgba(99, 102, 241, 0.85);
 }
 
 /* Subtle glowing pulse */
