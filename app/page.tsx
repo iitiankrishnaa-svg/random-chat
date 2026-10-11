@@ -44,13 +44,15 @@ export default function HomePage() {
       {/* Interactive Physics Dot Canvas - Fixed to Viewport */}
       <InteractiveParticleBackground />
 
-      <div className="flex flex-col items-center relative">
+      <div className="flex flex-col items-center relative w-full max-w-full overflow-x-clip">
         {/* Ambient background aurora effects spanning entire page length */}
-        <div className="pointer-events-none absolute -top-44 left-1/2 -translate-x-1/2 w-[780px] h-[380px] bg-indigo-600/15 rounded-full blur-[150px] animate-ambient-glow" />
-        <div className="pointer-events-none absolute top-[550px] -right-32 w-[600px] h-[450px] bg-cyan-600/10 rounded-full blur-[140px]" />
-        <div className="pointer-events-none absolute top-[950px] left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-indigo-600/10 rounded-full blur-[150px]" />
-        <div className="pointer-events-none absolute top-[1500px] -left-32 w-[600px] h-[450px] bg-purple-600/10 rounded-full blur-[140px]" />
-        <div className="pointer-events-none absolute top-[2100px] -right-32 w-[550px] h-[450px] bg-cyan-600/10 rounded-full blur-[140px]" />
+        <div className="pointer-events-none absolute inset-0 overflow-hidden w-full max-w-full" aria-hidden="true">
+          <div className="absolute -top-44 left-1/2 -translate-x-1/2 w-[780px] h-[380px] bg-indigo-600/15 rounded-full blur-[150px] animate-ambient-glow" />
+          <div className="absolute top-[550px] -right-32 w-[600px] h-[450px] bg-cyan-600/10 rounded-full blur-[140px]" />
+          <div className="absolute top-[950px] left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-indigo-600/10 rounded-full blur-[150px]" />
+          <div className="absolute top-[1500px] -left-32 w-[600px] h-[450px] bg-purple-600/10 rounded-full blur-[140px]" />
+          <div className="absolute top-[2100px] -right-32 w-[550px] h-[450px] bg-cyan-600/10 rounded-full blur-[140px]" />
+        </div>
 
         {/* Hero Section */}
         <section
