@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { APP_CONFIG } from '@/lib/constants';
 import OnlineBadge from '@/components/OnlineBadge';
+import InteractiveParticleBackground from '@/components/InteractiveParticleBackground';
 
 export default function HomePage() {
   const faqs = [
@@ -40,13 +41,16 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col items-center relative overflow-hidden">
+      {/* Interactive Physics Dot Canvas */}
+      <InteractiveParticleBackground />
+
       {/* Ambient background aurora effects */}
       <div className="pointer-events-none absolute -top-44 left-1/2 -translate-x-1/2 w-[780px] h-[380px] bg-indigo-600/15 rounded-full blur-[150px] animate-ambient-glow" />
       <div className="pointer-events-none absolute top-[600px] -right-32 w-[500px] h-[400px] bg-cyan-600/10 rounded-full blur-[140px]" />
       <div className="pointer-events-none absolute top-[1200px] -left-32 w-[500px] h-[400px] bg-purple-600/10 rounded-full blur-[140px]" />
 
       {/* Hero Section */}
-      <section className="relative w-full overflow-hidden px-4 pt-20 pb-24 sm:px-6 lg:px-8 text-center bg-grid-pattern">
+      <section className="relative w-full overflow-hidden px-4 pt-20 pb-24 sm:px-6 lg:px-8 text-center">
         <div className="mx-auto max-w-4xl relative z-10">
           <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mb-8">
             <OnlineBadge variant="hero" />
