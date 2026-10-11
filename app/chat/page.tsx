@@ -20,7 +20,8 @@ import {
   ArrowRight,
   MessageSquare,
   Sparkles,
-  Lock
+  Lock,
+  Share2
 } from 'lucide-react';
 import OnlineBadge from '@/components/OnlineBadge';
 
@@ -101,6 +102,16 @@ export default function ChatPage() {
   const [partnerIsTyping, setPartnerIsTyping] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [mobileHeight, setMobileHeight] = useState<number | null>(null);
+  const [copiedInvite, setCopiedInvite] = useState(false);
+
+  const handleCopyInvite = () => {
+    if (typeof window !== 'undefined') {
+      const url = window.location.origin;
+      navigator.clipboard.writeText(url);
+      setCopiedInvite(true);
+      setTimeout(() => setCopiedInvite(false), 2500);
+    }
+  };
 
   const supabase = createClient();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -737,24 +748,47 @@ export default function ChatPage() {
 
             {/* WAITING IN QUEUE STATE */}
             {chatState === 'waiting' && (
-              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-                <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mb-5">
-                  <div className="absolute inset-0 rounded-full border border-cyan-400/30 animate-ping [animation-duration:2.5s]" />
-                  <RefreshCw className="h-8 w-8 animate-spin text-cyan-400" />
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
+                <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-cyan-500/10 border border-cyan-500/25 text-cyan-400 mb-6 shadow-[0_0_30px_rgba(6,182,212,0.15)]">
+                  <div className="absolute inset-0 rounded-full border border-cyan-400/30 animate-ping [animation-duration:3s]" />
+                  <div className="absolute -inset-2 rounded-full border border-indigo-500/20 animate-pulse" />
+                  <RefreshCw className="h-9 w-9 animate-spin text-cyan-400" />
                 </div>
-                <h2 className="text-lg font-bold text-white">Searching for an available stranger...</h2>
-                <p className="mt-1 text-xs text-zinc-400 max-w-xs leading-relaxed">
-                  You will connect automatically as soon as another adult user joins.
+
+                <h2 className="text-xl font-bold tracking-tight text-white">Searching for an available stranger...</h2>
+                <p className="mt-2 text-xs sm:text-sm text-zinc-400 max-w-sm leading-relaxed">
+                  You will connect automatically as soon as another user joins. Audio chime is active to notify you instantly.
                 </p>
+
                 <div className="mt-4">
                   <OnlineBadge variant="toolbar" />
                 </div>
-                <button
-                  onClick={handleCancelSearch}
-                  className="mt-6 px-5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-zinc-300 hover:text-white transition-all active:scale-95"
-                >
-                  Cancel Search
-                </button>
+
+                <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+                  <button
+                    onClick={handleCopyInvite}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-xs font-semibold text-indigo-300 hover:text-white transition-all active:scale-95 shadow-sm"
+                  >
+                    {copiedInvite ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-400" />
+                        <span className="text-emerald-300">Link Copied to Clipboard!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span>Copy Link to Invite Stranger</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={handleCancelSearch}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-zinc-400 hover:text-white transition-all active:scale-95"
+                  >
+                    Cancel Search
+                  </button>
+                </div>
               </div>
             )}
 
