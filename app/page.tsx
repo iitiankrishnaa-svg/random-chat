@@ -40,67 +40,77 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="flex flex-col items-center relative overflow-hidden">
-      {/* Interactive Physics Dot Canvas */}
+    <>
+      {/* Interactive Physics Dot Canvas - Fixed to Viewport */}
       <InteractiveParticleBackground />
 
-      {/* Ambient background aurora effects */}
-      <div className="pointer-events-none absolute -top-44 left-1/2 -translate-x-1/2 w-[780px] h-[380px] bg-indigo-600/15 rounded-full blur-[150px] animate-ambient-glow" />
-      <div className="pointer-events-none absolute top-[600px] -right-32 w-[500px] h-[400px] bg-cyan-600/10 rounded-full blur-[140px]" />
-      <div className="pointer-events-none absolute top-[1200px] -left-32 w-[500px] h-[400px] bg-purple-600/10 rounded-full blur-[140px]" />
+      <div className="flex flex-col items-center relative">
+        {/* Ambient background aurora effects spanning entire page length */}
+        <div className="pointer-events-none absolute -top-44 left-1/2 -translate-x-1/2 w-[780px] h-[380px] bg-indigo-600/15 rounded-full blur-[150px] animate-ambient-glow" />
+        <div className="pointer-events-none absolute top-[550px] -right-32 w-[600px] h-[450px] bg-cyan-600/10 rounded-full blur-[140px]" />
+        <div className="pointer-events-none absolute top-[950px] left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-indigo-600/10 rounded-full blur-[150px]" />
+        <div className="pointer-events-none absolute top-[1500px] -left-32 w-[600px] h-[450px] bg-purple-600/10 rounded-full blur-[140px]" />
+        <div className="pointer-events-none absolute top-[2100px] -right-32 w-[550px] h-[450px] bg-cyan-600/10 rounded-full blur-[140px]" />
 
-      {/* Hero Section */}
-      <section className="relative w-full overflow-hidden px-4 pt-20 pb-24 sm:px-6 lg:px-8 text-center">
-        <div className="mx-auto max-w-4xl relative z-10">
-          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mb-8">
-            <OnlineBadge variant="hero" />
+        {/* Hero Section */}
+        <section
+          style={{ backgroundColor: 'transparent' }}
+          className="relative w-full px-4 pt-20 pb-24 sm:px-6 lg:px-8 text-center"
+        >
+          <div className="mx-auto max-w-4xl relative z-10">
+            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mb-8">
+              <OnlineBadge variant="hero" />
 
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-xs font-medium text-indigo-300 backdrop-blur-md shadow-[0_0_15px_rgba(99,102,241,0.12)]">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-xs font-medium text-indigo-300 backdrop-blur-md shadow-[0_0_15px_rgba(99,102,241,0.12)]">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                Adult-Only Pilot &bull; 18+ Only &bull; 100% Free
+              </div>
+            </div>
+
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.15]">
+              Free Random Chat with Strangers.{' '}
+              <span className="bg-gradient-to-r from-indigo-400 via-cyan-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-sm">
+                No Login Required.
               </span>
-              Adult-Only Pilot &bull; 18+ Only &bull; 100% Free
+            </h1>
+
+            <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-zinc-400 leading-relaxed font-normal">
+              Connect instantly with someone new across the globe. StrangerSpace provides fast, private, 1-on-1 text conversations with random strangers — no apps, no phone numbers, and zero chat logs.
+            </p>
+
+            <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                href="/chat"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              >
+                <span>Start Random Chat Now</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+
+              <a
+                href="#how-it-works"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-7 py-4 text-base font-medium text-zinc-300 hover:bg-white/[0.08] hover:text-white hover:border-white/20 transition-all"
+              >
+                How Random Chat Works
+              </a>
+            </div>
+
+            <div className="mt-6 text-xs text-zinc-500 flex items-center justify-center gap-2">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+              <span>By entering you confirm you are at least 18 years of age and agree to our guidelines.</span>
             </div>
           </div>
+        </section>
 
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.15]">
-            Free Random Chat with Strangers.{' '}
-            <span className="bg-gradient-to-r from-indigo-400 via-cyan-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-sm">
-              No Login Required.
-            </span>
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-zinc-400 leading-relaxed font-normal">
-            Connect instantly with someone new across the globe. StrangerSpace provides fast, private, 1-on-1 text conversations with random strangers — no apps, no phone numbers, and zero chat logs.
-          </p>
-
-          <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/chat"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              <span>Start Random Chat Now</span>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-
-            <a
-              href="#how-it-works"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-7 py-4 text-base font-medium text-zinc-300 hover:bg-white/[0.08] hover:text-white hover:border-white/20 transition-all"
-            >
-              How Random Chat Works
-            </a>
-          </div>
-
-          <div className="mt-6 text-xs text-zinc-500 flex items-center justify-center gap-2">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-            <span>By entering you confirm you are at least 18 years of age and agree to our guidelines.</span>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section id="how-it-works" className="w-full border-t border-white/[0.08] bg-transparent py-24 px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* How It Works Section */}
+        <section
+          id="how-it-works"
+          style={{ backgroundColor: 'transparent' }}
+          className="w-full border-t border-white/[0.08] bg-transparent py-24 px-4 sm:px-6 lg:px-8 relative z-10"
+        >
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 mb-3">
@@ -259,5 +269,6 @@ export default function HomePage() {
         </div>
       </section>
     </div>
+  </>
   );
 }

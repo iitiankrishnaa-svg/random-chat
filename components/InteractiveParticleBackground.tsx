@@ -51,19 +51,19 @@ export default function InteractiveParticleBackground() {
 
       particles = [];
 
-      // Grid spacing adjusted for screen density (responsive)
-      const spacing = width < 768 ? 34 : 26;
-      const cols = Math.ceil(width / spacing) + 1;
-      const rows = Math.ceil(height / spacing) + 1;
+      // Grid spacing for dense, crisp dot matrix
+      const spacing = width < 768 ? 30 : 24;
+      const cols = Math.ceil(width / spacing) + 2;
+      const rows = Math.ceil(height / spacing) + 2;
 
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
           const x = i * spacing + (j % 2 === 0 ? 0 : spacing * 0.5);
           const y = j * spacing;
 
-          // Subtle theme palette variation (indigo / cyan / soft white)
-          const isCyan = (i + j) % 6 === 0;
-          const isIndigo = (i * 2 + j) % 7 === 0;
+          // Theme palette: cyan accents, indigo accents, and crisp modern white
+          const isCyan = (i + j) % 5 === 0;
+          const isIndigo = (i * 2 + j) % 6 === 0;
 
           particles.push({
             x,
@@ -72,10 +72,10 @@ export default function InteractiveParticleBackground() {
             baseY: y,
             vx: 0,
             vy: 0,
-            size: Math.random() * 0.5 + 1.2,
-            colorR: isCyan ? 6 : isIndigo ? 99 : 240,
-            colorG: isCyan ? 182 : isIndigo ? 102 : 245,
-            colorB: isCyan ? 212 : isIndigo ? 241 : 255,
+            size: Math.random() * 0.5 + 1.4,
+            colorR: isCyan ? 6 : isIndigo ? 99 : 230,
+            colorG: isCyan ? 182 : isIndigo ? 102 : 235,
+            colorB: isCyan ? 212 : isIndigo ? 241 : 245,
           });
         }
       }
@@ -124,8 +124,8 @@ export default function InteractiveParticleBackground() {
     initParticles();
 
     // Realistic physics parameters
-    const SPRING = 0.055; // Natural elastic pull toward home anchor
-    const FRICTION = 0.86; // Fluid air damping
+    const SPRING = 0.055; // Elastic restoring force
+    const FRICTION = 0.86; // Air resistance damping
     const BASE_RADIUS = 135; // Hover influence radius in pixels
 
     let lastTime = performance.now();
@@ -133,7 +133,6 @@ export default function InteractiveParticleBackground() {
     const animate = (time: number) => {
       animationFrameId = requestAnimationFrame(animate);
 
-      // Delta time normalization
       const dt = Math.min((time - lastTime) / 16.66, 2);
       lastTime = time;
 
@@ -152,7 +151,6 @@ export default function InteractiveParticleBackground() {
           const dist = Math.hypot(dx, dy);
 
           if (dist < dynamicRadius && dist > 0.001) {
-            // Repulsive force quadratic falloff
             const normalDist = dist / dynamicRadius;
             const force = (1 - normalDist) * (1 - normalDist) * 16 * dt;
             const angle = Math.atan2(dy, dx);
@@ -180,9 +178,9 @@ export default function InteractiveParticleBackground() {
         const displacement = Math.hypot(p.x - p.baseX, p.y - p.baseY);
         const activity = Math.min(displacement / 24, 1);
 
-        // Alpha calculation: ambient resting dots vs excited glowing dots
-        const baseAlpha = 0.18;
-        const alpha = baseAlpha + activity * 0.72;
+        // Alpha calculation: distinctly visible resting dots (0.32) + bright excited glow
+        const baseAlpha = 0.32;
+        const alpha = baseAlpha + activity * 0.68;
         const renderSize = p.size + activity * 1.4;
 
         ctx.beginPath();
@@ -194,7 +192,7 @@ export default function InteractiveParticleBackground() {
         if (activity > 0.2) {
           ctx.beginPath();
           ctx.arc(p.x, p.y, renderSize * 2.8, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${p.colorR}, ${p.colorG}, ${p.colorB}, ${(activity * 0.16).toFixed(3)})`;
+          ctx.fillStyle = `rgba(${p.colorR}, ${p.colorG}, ${p.colorB}, ${(activity * 0.18).toFixed(3)})`;
           ctx.fill();
         }
       }
@@ -215,7 +213,15 @@ export default function InteractiveParticleBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none fixed inset-0 z-0 h-full w-full select-none"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        pointerEvents: 'none',
+        zIndex: 0,
+      }}
       aria-hidden="true"
     />
   );
